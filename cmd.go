@@ -1,42 +1,26 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
 	"net/url"
 	"strings"
 	"time"
 
-	client "github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
+	common "github.com/apiheat/akamai-cli-common"
+	edgegrid "github.com/apiheat/go-edgegrid"
+	logs "github.com/sirupsen/logrus"
+
 	"github.com/urfave/cli"
 )
 
-type ReportBody struct {
-	ObjectType string   `json:"objectType"`
-	ObjectIds  []string `json:"objectIds"`
-	Metrics    []string `json:"metrics"`
-}
-
-type ReportBodyAll struct {
-	ObjectType string   `json:"objectType"`
-	ObjectIds  string   `json:"objectIds"`
-	Metrics    []string `json:"metrics"`
-}
-
 func cmdReport(c *cli.Context) error {
-	if debug {
-		if c.String("start") == "" && c.String("end") == "" {
-			fmt.Println("# Will generate report for last 24h")
-		}
-		if c.String("cp-code") == "all" {
-			fmt.Println("# Will generate report for all CP Codes")
-		}
+	if c.String("start") == "" && c.String("end") == "" {
+		logs.Info("[" + strings.Title(appName) + "]::Report will be generated for last 24h")
 	}
-	return reportProperty(c)
+	if c.String("cp-code") == "all" {
+		return reportAllCpCodes(c)
+	}
+	return reportCpCode(c)
 }
 
 func strToStrArr(str string) (strArr []string) {
@@ -46,74 +30,46 @@ func strToStrArr(str string) (strArr []string) {
 	return strArr
 }
 
-func reportProperty(c *cli.Context) error {
-	dateRange := prepareTimeframes(c)
-
-	urlStr := fmt.Sprintf("%s/%s/versions/1/report-data?%s&interval=%s", URL, c.String("type"), dateRange, c.String("interval"))
-
-	if debug {
-		println(urlStr)
+func reportAllCpCodes(c *cli.Context) error {
+	logs.Info("[" + strings.Title(appName) + "]::Report will be generated for all CP Codes")
+	requestOptions := edgegrid.AkamaiReportOptions{
+		TypeOfReport: c.String("type"),
+		Interval:     c.String("interval"),
+		DateRange:    prepareTimeframes(c),
 	}
 
-	bodyStr, err := json.Marshal(ReportBodyAll{
+	body := edgegrid.AkamaiReportingBodyAll{
 		ObjectType: "cpcode",
 		ObjectIds:  "all",
-		Metrics:    strToStrArr(c.String("metrics")),
-	})
-	errorCheck(err)
-
-	if c.String("cp-code") != "all" {
-		bodyStr, err = json.Marshal(ReportBody{
-			ObjectType: "cpcode",
-			ObjectIds:  strToStrArr(c.String("cp-code")),
-			Metrics:    strToStrArr(c.String("metrics")),
-		})
-		errorCheck(err)
+		Metrics:    common.StringToStringsArr(c.String("metrics")),
 	}
 
-	if debug {
-		println(string(bodyStr))
-	}
+	report, _ := apiClient.ReportingAPI.GenerateReport(body, requestOptions)
 
-	data, respCode := fetchData(urlStr, "POST", bytes.NewBufferString(string(bodyStr)))
-
-	if debug {
-		fmt.Printf("Response code: %d\n", respCode)
-	}
-
-	printJSON(data)
+	fmt.Println(report)
 
 	return nil
 }
 
-func errorCheck(e error) {
-	if e != nil {
-		log.Fatal(e)
+func reportCpCode(c *cli.Context) error {
+	requestOptions := edgegrid.AkamaiReportOptions{
+		TypeOfReport: c.String("type"),
+		Interval:     c.String("interval"),
+		DateRange:    prepareTimeframes(c),
 	}
-}
 
-func printJSON(str string) {
-	var prettyJSON bytes.Buffer
-	error := json.Indent(&prettyJSON, []byte(str), "", "    ")
-	if error != nil {
-		log.Println("JSON parse error: ", error)
-		return
+	body := edgegrid.AkamaiReportingBody{
+		ObjectType: "cpcode",
+		ObjectIds:  common.StringToStringsArr(c.String("cp-code")),
+		Metrics:    common.StringToStringsArr(c.String("metrics")),
 	}
-	fmt.Println(string(prettyJSON.Bytes()))
-	return
-}
 
-func fetchData(urlPath, method string, body io.Reader) (string, int) {
-	req, err := client.NewRequest(edgeConfig, method, urlPath, body)
-	errorCheck(err)
+	report, err := apiClient.ReportingAPI.GenerateReport(body, requestOptions)
+	common.ErrorCheck(err)
 
-	resp, err := client.Do(edgeConfig, req)
-	errorCheck(err)
+	common.PrintJSON(report.Body)
 
-	defer resp.Body.Close()
-	byt, _ := ioutil.ReadAll(resp.Body)
-
-	return string(byt), resp.StatusCode
+	return nil
 }
 
 // prepareTimeframes return start and end time for our query against OpsGenie

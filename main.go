@@ -1,79 +1,36 @@
 package main
 
 import (
+	"log"
 	"os"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
-	"github.com/fatih/color"
-	homedir "github.com/mitchellh/go-homedir"
+	common "github.com/apiheat/akamai-cli-common"
+	edgegrid "github.com/apiheat/go-edgegrid"
+
 	"github.com/urfave/cli"
 )
 
 var (
-	colorOn, raw, debug       bool
-	version, appName          string
-	configSection, configFile string
-	edgeConfig                edgegrid.Config
-)
-
-// Constants
-const (
-	URL     = "/reporting-api/v1/reports"
-	padding = 3
+	apiClient       *edgegrid.Client
+	apiClientOpts   *edgegrid.ClientOptions
+	appVer, appName string
 )
 
 func main() {
-	_, inCLI := os.LookupEnv("AKAMAI_CLI")
+	app := common.CreateNewApp(appName, "A CLI to generate Akamai reports", appVer)
+	app.Flags = common.CreateFlags()
+	app.Before = func(c *cli.Context) error {
 
-	appName = "akamai-reporting"
-	if inCLI {
-		appName = "akamai reporting"
-	}
+		apiClientOpts := &edgegrid.ClientOptions{}
+		apiClientOpts.ConfigPath = c.GlobalString("config")
+		apiClientOpts.ConfigSection = c.GlobalString("section")
+		apiClientOpts.DebugLevel = c.GlobalString("debug")
 
-	app := cli.NewApp()
-	app.Name = appName
-	app.HelpName = appName
-	app.Usage = "A CLI to generate Akamai reports"
-	app.Version = version
-	app.Copyright = ""
-	app.Authors = []cli.Author{
-		{
-			Name: "Petr Artamonov",
-		},
-		{
-			Name: "Rafal Pieniazek",
-		},
-	}
+		// create new Akamai API client
+		apiClient, _ = edgegrid.NewClient(nil, apiClientOpts)
 
-	dir, _ := homedir.Dir()
-	dir += string(os.PathSeparator) + ".edgerc"
-
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:        "section, s",
-			Value:       "default",
-			Usage:       "`NAME` of section to use from credentials file",
-			Destination: &configSection,
-			EnvVar:      "AKAMAI_EDGERC_SECTION",
-		},
-		cli.StringFlag{
-			Name:        "config, c",
-			Value:       dir,
-			Usage:       "Location of the credentials `FILE`",
-			Destination: &configFile,
-			EnvVar:      "AKAMAI_EDGERC",
-		},
-		cli.BoolFlag{
-			Name:        "no-color",
-			Usage:       "Disable color output",
-			Destination: &colorOn,
-		},
-		cli.BoolFlag{
-			Name:        "debug",
-			Usage:       "Debug info",
-			Destination: &debug,
-		},
+		return nil
 	}
 
 	app.Commands = []cli.Command{
@@ -120,14 +77,8 @@ func main() {
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 
-	app.Before = func(c *cli.Context) error {
-		if c.Bool("no-color") {
-			color.NoColor = true
-		}
-
-		config(configFile, configSection)
-		return nil
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	app.Run(os.Args)
 }
