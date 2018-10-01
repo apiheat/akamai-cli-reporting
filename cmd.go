@@ -8,14 +8,14 @@ import (
 
 	common "github.com/apiheat/akamai-cli-common"
 	edgegrid "github.com/apiheat/go-edgegrid"
-	logs "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli"
 )
 
 func cmdReport(c *cli.Context) error {
 	if c.String("start") == "" && c.String("end") == "" {
-		logs.Info("[" + strings.Title(appName) + "]::Report will be generated for last 24h")
+		log.Info("[" + strings.Title(appName) + "]::Report will be generated for last 24h")
 	}
 	if c.String("cp-code") == "all" {
 		return reportAllCpCodes(c)
@@ -23,15 +23,8 @@ func cmdReport(c *cli.Context) error {
 	return reportCpCode(c)
 }
 
-func strToStrArr(str string) (strArr []string) {
-	for _, s := range strings.Split(str, ",") {
-		strArr = append(strArr, s)
-	}
-	return strArr
-}
-
 func reportAllCpCodes(c *cli.Context) error {
-	logs.Info("[" + strings.Title(appName) + "]::Report will be generated for all CP Codes")
+	log.Info("[" + strings.Title(appName) + "]::Report will be generated for all CP Codes")
 	requestOptions := edgegrid.AkamaiReportOptions{
 		TypeOfReport: c.String("type"),
 		Interval:     c.String("interval"),
@@ -44,7 +37,7 @@ func reportAllCpCodes(c *cli.Context) error {
 		Metrics:    common.StringToStringsArr(c.String("metrics")),
 	}
 
-	report, _ := apiClient.ReportingAPI.GenerateReport(body, requestOptions)
+	report, _ := apiClient.Reporting.GenerateReport(body, requestOptions)
 
 	fmt.Println(report)
 
@@ -64,7 +57,7 @@ func reportCpCode(c *cli.Context) error {
 		Metrics:    common.StringToStringsArr(c.String("metrics")),
 	}
 
-	report, err := apiClient.ReportingAPI.GenerateReport(body, requestOptions)
+	report, err := apiClient.Reporting.GenerateReport(body, requestOptions)
 	common.ErrorCheck(err)
 
 	common.PrintJSON(report.Body)

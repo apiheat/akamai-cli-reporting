@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"os"
 	"sort"
 
 	common "github.com/apiheat/akamai-cli-common"
 	edgegrid "github.com/apiheat/go-edgegrid"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli"
 )
