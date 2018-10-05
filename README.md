@@ -1,4 +1,4 @@
-# Akamai CLI for Adaptive Acceleration
+# Akamai CLI for Reporting
 
 Generate Akamai reports
 
