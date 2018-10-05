@@ -7,7 +7,7 @@
       "name": "users",
       "version": "0.0.3",
       "description": "Reporting",
-      "bin": "https://github.com/partamonov/akamai-cli-reporting/releases/download/v{{.Version}}/akamai-{{.Name}}_{{.OS}}_{{.Arch}}{{.BinSuffix}}"
+      "bin": "https://github.com/apiheat/akamai-cli-reporting/releases/download/v{{.Version}}/akamai-{{.Name}}_{{.OS}}_{{.Arch}}{{.BinSuffix}}"
     }
   ]
 }

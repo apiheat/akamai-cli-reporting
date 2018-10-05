@@ -1,22 +1,20 @@
 # Akamai CLI for Adaptive Acceleration
-*NOTE:* This tool is intended to be installed via the Akamai CLI package manager, which can be retrieved from the releases page of the [Akamai CLI](https://github.com/akamai/cli) tool.
 
-### Local Install, if you choose not to use the akamai package manager
-If you want to compile it from source, you will need Go 1.9 or later, and the [Glide](https://glide.sh) package manager installed:
-1. Fetch the package:
-   `go get https://github.com/partamonov/akamai-cli-reporting`
-1. Change to the package directory:
-   `cd $GOPATH/src/github.com/partamonov/akamai-cli-reporting`
-1. Install dependencies using Glide:
-   `glide install`
-1. Compile the binary:
-   `go build -ldflags="-s -w -X main.version=X.X.X" -o akamai-reporting`
+Generate Akamai reports
+
+Should you miss something we *gladly accept patches* :)
+
+CLI uses custom [Akamai API client](https://github.com/apiheat/go-edgegrid)
+
+## Configuration & Installation
 
 ### Credentials
-In order to use this configuration, you need to:
-* Set up your credential files as described in the [authorization](https://developer.akamai.com/introduction/Prov_Creds.html) and [credentials](https://developer.akamai.com/introduction/Conf_Client.html) sections of the getting started guide on developer.akamai.com.
 
-Expects `default` section in .edgerc, can be changed via --section parameter
+Set up your credential files as described in the [authorization](https://developer.akamai.com/introduction/Prov_Creds.html) and [credentials](https://developer.akamai.com/introduction/Conf_Client.html) sections of the getting started guide on developer.akamai.com.
+
+Tools expect proper format of sections in edgerc file which example is shown below
+
+*NOTE:* Default file location is *~/.edgerc*
 
 ```
 [default]
@@ -26,19 +24,45 @@ access_token = XXXXXXXXXXXX
 client_token = XXXXXXXXXXXX
 ```
 
-## Overview
-Generate Akamai reports
+In order to change section which is being actively used you can
 
-## Main Command Usage
+* change it via `--config parameter` of the tool itself
+* change it via env variable `export AKAMAI_EDGERC_CONFIG=/Users/jsmitsh/.edgerc`
+
+In order to change section which is being actively used you can
+
+* change it via `--section parameter` of the tool itself
+* change it via env variable `export AKAMAI_EDGERC_SECTION=mycustomsection`
+
+> *NOTE:* Make sure your API client do have appropriate scopes enabled
+
+### Installation
+
+The tool can be used as a stand-alone binary or in conjuction with [Akamai CLI](https://developer.akamai.com/cli).
+
+#### Akamai-cli ( recommended )
+
+Execute the following from console
+
+```shell
+> akamai install https://github.com/apiheat/akamai-cli-reporting
+```
+
+#### Stand-alone
+
+As part of automated releases/builds you can download latest version from the project release page
+
+## Usage
+
 ```shell
 NAME:
-   akamai-reporting - A CLI to generate Akamai reports
+   akamai-cli-reporting - A CLI to generate Akamai reports
 
 USAGE:
-   akamai-reporting [global options] command [command options] [arguments...]
+   akamai-cli-reporting [global options] command [command options] [arguments...]
 
 VERSION:
-   0.0.1
+   X.X.X
 
 AUTHORS:
    Petr Artamonov
@@ -56,130 +80,21 @@ GLOBAL OPTIONS:
    --version, -v            print the version
 ```
 
-### Report command
+## Development
 
-You can get report for CP Code
+In order to develop the tool with us do the following:
 
-```shell
-NAME:
-   akamai-reporting generate - Generate a report.
+1. Fork repository
+1. Clone it to your folder ( within *GO* path )
+1. Ensure you can restore dependencies by running
 
-USAGE:
-   akamai-reporting generate [command options] [arguments...]
+   ```shell
+   dep ensure
+   ```
 
-OPTIONS:
-   --cp-code value   Set of CP Codes to generate report for. Comma separated list if many (default: "all")
-   --interval value  The duration of each data record, either FIVE_MINUTES, HOUR, DAY (default: "FIVE_MINUTES")
-   --start value     Specifies the start of the reported period as an ISO–8601 date with timezone.
-   --end value       Specifies the end of the reported period as an ISO–8601 date with timezone. Any data that matches the end value’s timestamp is excluded from the report.
-   --type value      Default report type (default: "todaytraffic-by-time")
-   --metrics value   Default metrics for report (default: "bytesOffload,hitsOffload,bytesOffloadAvg,hitsOffloadAvg,edgeHitsPerSecond,edgeBitsPerSecond,originBitsPerSecond,originHitsPerSecond,originBytesTotal,originHitsTotal,edgeBytesTotal,edgeHitsTotal")
+1. Make necessary changes
+1. Make sure solution builds properly ( feel free to add tests )
 
-> akamai reporting generate --cp-code XXXXXX --interval HOUR
-
-{
-    "metadata": {
-        "name": "todaytraffic-by-time",
-        "version": "1",
-        "groupBy": [
-            "startdatetime"
-        ],
-        "interval": "HOUR",
-        "start": "2018-09-25T14:00:00+02:00",
-        "end": "2018-09-26T14:00:00+02:00",
-        "availableDataEnds": "2018-09-26T13:40:00+02:00",
-        "suggestedRetryTime": "2018-09-26T14:15:24.316+02:00",
-        "rowCount": 24,
-        "filters": [],
-        "columns": [
-            {
-                "name": "groupBy",
-                "label": "startdatetime"
-            },
-            {
-                "name": "bytesOffload",
-                "label": "Offloaded Bytes"
-            },
-            {
-                "name": "edgeBitsPerSecond",
-                "label": "Edge Bits/Sec"
-            },
-            {
-                "name": "edgeHitsPerSecond",
-                "label": "Edge Hits/Sec"
-            },
-            {
-                "name": "hitsOffload",
-                "label": "Offloaded Hits"
-            },
-            {
-                "name": "originBitsPerSecond",
-                "label": "Origin Bits/Sec"
-            },
-            {
-                "name": "originHitsPerSecond",
-                "label": "Origin Hits/Sec"
-            }
-        ],
-        "objectType": "cpcode",
-        "objectIds": [
-            "XXXXXX"
-        ]
-    },
-    "data": [
-        {
-            "startdatetime": "2018-09-25T14:00:00+02:00",
-            "bytesOffload": "92.06264019706161",
-            "edgeBitsPerSecond": "1932708.124444444",
-            "edgeHitsPerSecond": "2.9",
-            "hitsOffload": "79.02298850574713",
-            "originBitsPerSecond": "153405.9977777778",
-            "originHitsPerSecond": "0.6083333333333333"
-        },
-        .....
-        {
-            "startdatetime": "2018-09-26T12:00:00+02:00",
-            "bytesOffload": "81.76398889560950",
-            "edgeBitsPerSecond": "2773834.568888889",
-            "edgeHitsPerSecond": "3.066666666666667",
-            "hitsOffload": "82.60869565217391",
-            "originBitsPerSecond": "505836.78",
-            "originHitsPerSecond": "0.5333333333333333"
-        }
-    ],
-    "summaryStatistics": {
-        "bytesOffloadAvg": {
-            "value": "81.91146941726757",
-            "details": {}
-        },
-        "edgeBytesTotal": {
-            "value": "15329986742",
-            "details": {}
-        },
-        "edgeHitsTotal": {
-            "value": "159900",
-            "details": {}
-        },
-        "hitsOffloadAvg": {
-            "value": "49.11393986598426",
-            "details": {}
-        },
-        "originBytesTotal": {
-            "value": "2467536323",
-            "details": {}
-        },
-        "originHitsTotal": {
-            "value": "56670",
-            "details": {}
-        }
-    }
-}
-```
-
-#### Reset command
-
-
-```shell
-> akamai reporting reset PROPERTY_ID
-...
-```
+   ```shell
+   go build -ldflags="-s -w -X main.appVer=1.2.3 -X main.appName=$(basename `pwd`)"
+   ```
