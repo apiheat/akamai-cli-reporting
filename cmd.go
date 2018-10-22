@@ -77,20 +77,21 @@ func prepareTimeframes(c *cli.Context) string {
 		r = 5 * time.Minute
 	case "HOUR":
 		r = 1 * time.Hour
-
 	}
 
 	if c.String("start") == "" && c.String("end") == "" {
 		start = time.Now().AddDate(0, 0, -1).Round(r)
 		end = time.Now().Round(r)
+		if c.String("interval") == "DAY" {
+			start = specificDate(start)
+			end = specificDate(end)
+		}
 	}
 
 	return fmt.Sprintf("start=%s&end=%s", url.QueryEscape(start.Format(time.RFC3339)), url.QueryEscape(end.Format(time.RFC3339)))
 
 }
 
-func specificDate(t time.Time, hourAt, minAt, secAt int) time.Time {
-	ams, _ := time.LoadLocation("Europe/Amsterdam")
-	year, month, day := t.Date()
-	return time.Date(year, month, day, hourAt, minAt, secAt, 0, ams)
+func specificDate(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
