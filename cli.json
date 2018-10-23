@@ -4,8 +4,8 @@
   },
   "commands": [
     {
-      "name": "users",
-      "version": "3.0.4",
+      "name": "reporting",
+      "version": "3.0.5",
       "description": "Reporting",
       "bin": "https://github.com/apiheat/akamai-cli-reporting/releases/download/v{{.Version}}/akamai-cli-{{.Name}}_{{.OS}}_{{.Arch}}{{.BinSuffix}}"
     }
