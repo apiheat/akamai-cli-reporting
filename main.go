@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sort"
 
@@ -21,6 +22,7 @@ func main() {
 	app := common.CreateNewApp(appName, "A CLI to generate Akamai reports", appVer)
 	app.Flags = common.CreateFlags()
 	app.Before = func(c *cli.Context) error {
+		var err error
 
 		apiClientOpts := &edgegrid.ClientOptions{}
 		apiClientOpts.ConfigPath = c.GlobalString("config")
@@ -28,7 +30,12 @@ func main() {
 		apiClientOpts.DebugLevel = c.GlobalString("debug")
 
 		// create new Akamai API client
-		apiClient, _ = edgegrid.NewClient(nil, apiClientOpts)
+		apiClient, err = edgegrid.NewClient(nil, apiClientOpts)
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		return nil
 	}
