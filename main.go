@@ -28,8 +28,8 @@ func main() {
 		apiClientOpts.ConfigPath = c.GlobalString("config")
 		apiClientOpts.ConfigSection = c.GlobalString("section")
 		apiClientOpts.DebugLevel = c.GlobalString("debug")
+		apiClientOpts.AccountSwitchKey = c.GlobalString("ask")
 
-		// create new Akamai API client
 		apiClient, err = edgegrid.NewClient(nil, apiClientOpts)
 
 		if err != nil {

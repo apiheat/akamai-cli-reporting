@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -25,13 +24,15 @@ func cmdReport(c *cli.Context) error {
 
 func reportAllCpCodes(c *cli.Context) error {
 	log.Info("[" + strings.Title(appName) + "]::Report will be generated for all CP Codes")
-	requestOptions := edgegrid.AkamaiReportOptions{
+	start, end := prepareTimeframes(c)
+	requestOptions := edgegrid.ReportOptions{
 		TypeOfReport: c.String("type"),
 		Interval:     c.String("interval"),
-		DateRange:    prepareTimeframes(c),
+		Start:        start,
+		End:          end,
 	}
 
-	body := edgegrid.AkamaiReportingBodyAll{
+	body := edgegrid.ReportingBodyAll{
 		ObjectType: "cpcode",
 		ObjectIds:  "all",
 		Metrics:    common.StringToStringsArr(c.String("metrics")),
@@ -45,13 +46,15 @@ func reportAllCpCodes(c *cli.Context) error {
 }
 
 func reportCpCode(c *cli.Context) error {
-	requestOptions := edgegrid.AkamaiReportOptions{
+	start, end := prepareTimeframes(c)
+	requestOptions := edgegrid.ReportOptions{
 		TypeOfReport: c.String("type"),
 		Interval:     c.String("interval"),
-		DateRange:    prepareTimeframes(c),
+		Start:        start,
+		End:          end,
 	}
 
-	body := edgegrid.AkamaiReportingBody{
+	body := edgegrid.ReportingBody{
 		ObjectType: "cpcode",
 		ObjectIds:  common.StringToStringsArr(c.String("cp-code")),
 		Metrics:    common.StringToStringsArr(c.String("metrics")),
@@ -66,10 +69,9 @@ func reportCpCode(c *cli.Context) error {
 }
 
 // prepareTimeframes return start and end time for our query against OpsGenie
-func prepareTimeframes(c *cli.Context) string {
+func prepareTimeframes(c *cli.Context) (start, end time.Time) {
 	var (
-		start, end time.Time
-		r          time.Duration
+		r time.Duration
 	)
 
 	switch c.String("interval") {
@@ -88,7 +90,7 @@ func prepareTimeframes(c *cli.Context) string {
 		}
 	}
 
-	return fmt.Sprintf("start=%s&end=%s", url.QueryEscape(start.Format(time.RFC3339)), url.QueryEscape(end.Format(time.RFC3339)))
+	return start, end
 
 }
 
